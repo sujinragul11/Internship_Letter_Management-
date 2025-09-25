@@ -8,19 +8,77 @@ function LetterHistory({ internId }) {
   const [letters] = useState(() => storageUtils.getLettersByIntern(internId));
 
   const handleDownload = (letter) => {
-    const doc = new jsPDF();
-
-    // Add your letter content; assuming letter.content is HTML or text
-    doc.html(letter.content, {
-      callback: function (doc) {
-        const filename = `${letter.letterType === 'offer' ? 'offer-letter' : 'completion-certificate'}-${letter.internName
-          .replace(/\s+/g, '-')
-          .toLowerCase()}.pdf`;
-        doc.save(filename); // triggers the download
-      },
-      x: 10,
-      y: 10,
-    });
+    try {
+      const doc = new jsPDF();
+      
+      // Set font and styling
+      doc.setFont('times', 'normal');
+      doc.setFontSize(12);
+      
+      // Add company header
+      doc.setFontSize(16);
+      doc.setFont('times', 'bold');
+      doc.text('Roriri Software Solution Pvt. Ltd', 20, 20);
+      doc.setFontSize(10);
+      doc.setFont('times', 'normal');
+      doc.text('Nallanathapuram, Kalakad', 20, 28);
+      
+      // Add a line separator
+      doc.line(20, 35, 190, 35);
+      
+      // Process the letter content
+      const lines = letter.content.split('\n');
+      let yPosition = 50;
+      
+      lines.forEach((line) => {
+        if (line.trim() === '') {
+          yPosition += 5;
+          return;
+        }
+        
+        // Handle different text styles
+        if (line.includes('[COMPANY LETTERHEAD]')) {
+          return; // Skip this line as we already added header
+        }
+        
+        if (line.startsWith('Date:') || line.includes('INTERNSHIP DETAILS:') || 
+            line.includes('TERMS AND CONDITIONS:') || line.includes('PERFORMANCE SUMMARY:') ||
+            line.includes('PROJECTS AND CONTRIBUTIONS:')) {
+          doc.setFont('times', 'bold');
+          doc.setFontSize(12);
+        } else {
+          doc.setFont('times', 'normal');
+          doc.setFontSize(11);
+        }
+        
+        // Handle long lines by splitting them
+        const maxWidth = 170;
+        const splitText = doc.splitTextToSize(line, maxWidth);
+        
+        splitText.forEach((textLine) => {
+          if (yPosition > 270) { // Check if we need a new page
+            doc.addPage();
+            yPosition = 20;
+          }
+          doc.text(textLine, 20, yPosition);
+          yPosition += 6;
+        });
+        
+        yPosition += 2;
+      });
+      
+      // Generate filename
+      const filename = `${letter.letterType === 'offer' ? 'offer-letter' : 'completion-certificate'}-${letter.internName
+        .replace(/\s+/g, '-')
+        .toLowerCase()}.pdf`;
+      
+      // Save the PDF
+      doc.save(filename);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+    }
   };
 
   if (letters.length === 0) {

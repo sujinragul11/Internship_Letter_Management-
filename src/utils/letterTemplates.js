@@ -1,7 +1,5 @@
 export const letterTemplates = {
-  offer: `[COMPANY LETTERHEAD]
-
-Date: {{date}}
+  offer: `Date: {{date}}
 
 Dear {{name}},
 
@@ -43,9 +41,7 @@ Sincerely,
 ---
 This letter serves as an official offer of internship. Please retain this document for your records.`,
 
-  completion: `[COMPANY LETTERHEAD]
-
-Date: {{date}}
+  completion: `Date: {{date}}
 
 INTERNSHIP COMPLETION CERTIFICATE
 
@@ -84,11 +80,11 @@ Sincerely,
 
 [HR Manager Name]
 [Title]
-[Company Name]
+Roriri Software Solution Pvt. Ltd
 [Company Seal/Signature]
 
 ---
-This is an official completion certificate issued by [Company Name]. For verification, please contact our HR department.`
+This is an official completion certificate issued by Roriri Software Solution Pvt. Ltd. For verification, please contact our HR department.`
 };
 
 export const placeholderReplacements = {

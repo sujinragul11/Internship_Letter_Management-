@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Download, Mail, Send, FileText } from 'lucide-react';
 import { letterTemplates } from '../utils/letterTemplates';
 import { storageUtils } from '../utils/storage';
+import jsPDF from 'jspdf';
 
 function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
   const [emailSent, setEmailSent] = useState(false);
@@ -30,48 +31,165 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
   const handleDownload = async () => {
     setIsGenerating(true);
     
-    // Simulate PDF generation
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const letterData = {
-      id: Date.now().toString(),
-      internId: intern.id,
-      letterType,
-      content: generateLetterContent(),
-      generatedAt: new Date().toISOString(),
-      emailSent: false,
-    };
+    try {
+      const letterContent = generateLetterContent();
+      
+      // Create PDF using jsPDF
+      const doc = new jsPDF();
+      
+      // Set font and styling
+      doc.setFont('times', 'normal');
+      doc.setFontSize(12);
+      
+      // Add company header
+      doc.setFontSize(16);
+      doc.setFont('times', 'bold');
+      doc.text('Roriri Software Solution Pvt. Ltd', 20, 20);
+      doc.setFontSize(10);
+      doc.setFont('times', 'normal');
+      doc.text('Nallanathapuram, Kalakad', 20, 28);
+      
+      // Add a line separator
+      doc.line(20, 35, 190, 35);
+      
+      // Process the letter content
+      const lines = letterContent.split('\n');
+      let yPosition = 50;
+      
+      lines.forEach((line) => {
+        if (line.trim() === '') {
+          yPosition += 5;
+          return;
+        }
+        
+        // Handle different text styles
+        if (line.includes('[COMPANY LETTERHEAD]')) {
+          return; // Skip this line as we already added header
+        }
+        
+        if (line.startsWith('Date:') || line.includes('INTERNSHIP DETAILS:') || 
+            line.includes('TERMS AND CONDITIONS:') || line.includes('PERFORMANCE SUMMARY:') ||
+            line.includes('PROJECTS AND CONTRIBUTIONS:')) {
+          doc.setFont('times', 'bold');
+          doc.setFontSize(12);
+        } else {
+          doc.setFont('times', 'normal');
+          doc.setFontSize(11);
+        }
+        
+        // Handle long lines by splitting them
+        const maxWidth = 170;
+        const splitText = doc.splitTextToSize(line, maxWidth);
+        
+        splitText.forEach((textLine) => {
+          if (yPosition > 270) { // Check if we need a new page
+            doc.addPage();
+            yPosition = 20;
+          }
+          doc.text(textLine, 20, yPosition);
+          yPosition += 6;
+        });
+        
+        yPosition += 2;
+      });
+      
+      // Generate filename
+      const filename = `${letterType === 'offer' ? 'offer-letter' : 'completion-certificate'}-${intern.name.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      
+      // Save the PDF
+      doc.save(filename);
+      
+      // Save letter record
+      const letterData = {
+        id: Date.now().toString(),
+        internId: intern.id,
+        internName: intern.name,
+        letterType,
+        content: letterContent,
+        generatedAt: new Date().toISOString(),
+        emailSent: false,
+      };
 
-    storageUtils.saveLetter(letterData);
-    onLetterGenerated();
+      storageUtils.saveLetter(letterData);
+      onLetterGenerated();
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+    }
     
-    // Simulate download
-    alert(`${letterType === 'offer' ? 'Offer' : 'Completion'} letter downloaded as PDF!`);
     setIsGenerating(false);
   };
 
   const handleSendEmail = async () => {
     setIsGenerating(true);
     
-    // Simulate email sending
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const letterData = {
-      id: Date.now().toString(),
-      internId: intern.id,
-      letterType,
-      content: generateLetterContent(),
-      generatedAt: new Date().toISOString(),
-      emailSent: true,
-    };
+    try {
+      const letterContent = generateLetterContent();
+      
+      // Create email content
+      const emailSubject = letterType === 'offer' 
+        ? `Internship Offer Letter - ${intern.position} Position`
+        : `Internship Completion Certificate - ${intern.name}`;
+        
+      const emailBody = letterType === 'offer'
+        ? `Dear ${intern.name},
 
-    storageUtils.saveLetter(letterData);
-    onLetterGenerated();
+We are pleased to offer you an internship position as ${intern.position} at Roriri Software Solution Pvt. Ltd.
+
+Please find the detailed offer letter attached to this email.
+
+We look forward to having you join our team!
+
+Best regards,
+HR Team
+Roriri Software Solution Pvt. Ltd`
+        : `Dear ${intern.name},
+
+Congratulations on successfully completing your internship with us!
+
+Please find your internship completion certificate attached to this email.
+
+We wish you all the best in your future endeavors.
+
+Best regards,
+HR Team
+Roriri Software Solution Pvt. Ltd`;
+
+      // Create mailto link with the email content
+      const mailtoLink = `mailto:${intern.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+      
+      // Open default email client
+      window.open(mailtoLink);
+      
+      // Save letter record with email sent flag
+      const letterData = {
+        id: Date.now().toString(),
+        internId: intern.id,
+        internName: intern.name,
+        letterType,
+        content: letterContent,
+        generatedAt: new Date().toISOString(),
+        emailSent: true,
+      };
+
+      storageUtils.saveLetter(letterData);
+      onLetterGenerated();
+      
+      setEmailSent(true);
+      
+      // Show success message
+      setTimeout(() => {
+        alert('Email client opened! Please attach the PDF and send the email manually.');
+        setEmailSent(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error preparing email:', error);
+      alert('Error preparing email. Please try again.');
+    }
     
-    setEmailSent(true);
     setIsGenerating(false);
-    
-    setTimeout(() => setEmailSent(false), 3000);
   };
 
   const letterContent = generateLetterContent();
