@@ -2,9 +2,26 @@ import React, { useState } from 'react';
 import { Calendar, Mail, Download, Eye, FileText } from 'lucide-react';
 import { storageUtils } from '../utils/storage';
 import { formatDate } from '../utils/dateHelpers';
+import jsPDF from 'jspdf';
 
 function LetterHistory({ internId }) {
   const [letters] = useState(() => storageUtils.getLettersByIntern(internId));
+
+  const handleDownload = (letter) => {
+    const doc = new jsPDF();
+
+    // Add your letter content; assuming letter.content is HTML or text
+    doc.html(letter.content, {
+      callback: function (doc) {
+        const filename = `${letter.letterType === 'offer' ? 'offer-letter' : 'completion-certificate'}-${letter.internName
+          .replace(/\s+/g, '-')
+          .toLowerCase()}.pdf`;
+        doc.save(filename); // triggers the download
+      },
+      x: 10,
+      y: 10,
+    });
+  };
 
   if (letters.length === 0) {
     return (
@@ -18,7 +35,7 @@ function LetterHistory({ internId }) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">Letter History</h3>
-      
+
       <div className="space-y-3">
         {letters.map((letter) => (
           <div
@@ -30,13 +47,9 @@ function LetterHistory({ internId }) {
                 <div className={`p-2 rounded-lg ${
                   letter.letterType === 'offer' ? 'bg-blue-100' : 'bg-green-100'
                 }`}>
-                  {letter.letterType === 'offer' ? (
-                    <FileText className="h-4 w-4 text-blue-600" />
-                  ) : (
-                    <FileText className="h-4 w-4 text-green-600" />
-                  )}
+                  <FileText className={`h-4 w-4 ${letter.letterType === 'offer' ? 'text-blue-600' : 'text-green-600'}`} />
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-gray-900">
                     {letter.letterType === 'offer' ? 'Offer Letter' : 'Completion Certificate'}
@@ -55,7 +68,7 @@ function LetterHistory({ internId }) {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex space-x-2">
                 <button
                   onClick={() => alert('Preview functionality would open letter content')}
@@ -65,7 +78,7 @@ function LetterHistory({ internId }) {
                   <Eye className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => alert('Download would generate and download PDF')}
+                  onClick={() => handleDownload(letter)}
                   className="text-gray-600 hover:text-gray-900 p-1 transition-colors"
                   title="Download PDF"
                 >
