@@ -90,43 +90,36 @@ export const emailService = {
       const pdfBase64 = generatePDFBase64(letterContent, intern, 'offer');
       const filename = `offer-letter-${intern.name.replace(/\s+/g, '-').toLowerCase()}.pdf`;
       
-      // Prepare email parameters with all required fields
+      // Prepare email parameters - simplified for Gmail
       const emailParams = {
+        // Basic recipient info
         to_email: intern.email,
         to_name: intern.name,
+        
+        // Sender info (your Gmail)
+        from_email: 'sujinragul728@gmail.com',
         from_name: 'Roriri Software Solution Pvt. Ltd',
+        
+        // Email content
         subject: `Internship Offer Letter - ${intern.position} Position`,
-        message: `Dear ${intern.name},
-
-We are pleased to offer you an internship position as ${intern.position} at Roriri Software Solution Pvt. Ltd.
-
-Please find your detailed offer letter attached to this email.
-
-Internship Details:
-• Position: ${intern.position}
-• Start Date: ${new Date(intern.startDate).toLocaleDateString()}
-• Duration: ${intern.duration}
-• Stipend: ${intern.stipend}
-
-We look forward to having you join our team!
-
-Best regards,
-HR Team
-Roriri Software Solution Pvt. Ltd
-Nallanathapuram, Kalakad`,
+        message: letterContent, // The entire letter as the message body
+        
+        // PDF attachment
         attachment: pdfBase64,
         filename: filename,
-        // Additional template variables that might be expected
-        company_name: 'Roriri Software Solution Pvt. Ltd',
-        position: intern.position,
-        start_date: new Date(intern.startDate).toLocaleDateString(),
-        duration: intern.duration,
-        stipend: intern.stipend
+        
+        // Additional info
+        intern_name: intern.name,
+        intern_position: intern.position,
+        company_name: 'Roriri Software Solution Pvt. Ltd'
       };
 
-      console.log('Sending email with params:', {
-        ...emailParams,
-        attachment: '[PDF_DATA]' // Don't log the actual PDF data
+      console.log('Sending offer letter email to:', intern.email);
+      console.log('Email parameters:', {
+        to_email: emailParams.to_email,
+        subject: emailParams.subject,
+        from_email: emailParams.from_email,
+        filename: emailParams.filename
       });
 
       const response = await emailjs.send(
@@ -149,10 +142,16 @@ Nallanathapuram, Kalakad`,
       // Provide more specific error messages
       let errorMessage = 'Failed to send email';
       
-      if (error.message.includes('not configured')) {
+      if (error.message && error.message.includes('not configured')) {
         errorMessage = error.message;
       } else if (error.text) {
         errorMessage = `EmailJS Error: ${error.text}`;
+      } else if (error.status === 400) {
+        errorMessage = 'Bad Request: Please check your EmailJS template configuration. Make sure all template variables match.';
+      } else if (error.status === 401) {
+        errorMessage = 'Unauthorized: Please check your EmailJS User ID and Service ID.';
+      } else if (error.status === 403) {
+        errorMessage = 'Forbidden: Please check your EmailJS configuration and permissions.';
       } else if (error.status) {
         errorMessage = `Email service error (${error.status}): Please check your EmailJS configuration`;
       } else {
@@ -171,41 +170,36 @@ Nallanathapuram, Kalakad`,
       const pdfBase64 = generatePDFBase64(letterContent, intern, 'completion');
       const filename = `completion-certificate-${intern.name.replace(/\s+/g, '-').toLowerCase()}.pdf`;
       
-      // Prepare email parameters with all required fields
+      // Prepare email parameters - simplified for Gmail
       const emailParams = {
+        // Basic recipient info
         to_email: intern.email,
         to_name: intern.name,
+        
+        // Sender info (your Gmail)
+        from_email: 'sujinragul728@gmail.com',
         from_name: 'Roriri Software Solution Pvt. Ltd',
+        
+        // Email content
         subject: `Internship Completion Certificate - ${intern.name}`,
-        message: `Dear ${intern.name},
-
-Congratulations on successfully completing your internship with us!
-
-We are pleased to provide you with your internship completion certificate attached to this email.
-
-Internship Summary:
-• Position: ${intern.position}
-• Duration: ${intern.duration}
-• Completion Date: ${new Date().toLocaleDateString()}
-
-We wish you all the best in your future endeavors and hope the experience gained during your internship will be valuable for your career growth.
-
-Best regards,
-HR Team
-Roriri Software Solution Pvt. Ltd
-Nallanathapuram, Kalakad`,
+        message: letterContent, // The entire letter as the message body
+        
+        // PDF attachment
         attachment: pdfBase64,
         filename: filename,
-        // Additional template variables that might be expected
-        company_name: 'Roriri Software Solution Pvt. Ltd',
-        position: intern.position,
-        duration: intern.duration,
-        completion_date: new Date().toLocaleDateString()
+        
+        // Additional info
+        intern_name: intern.name,
+        intern_position: intern.position,
+        company_name: 'Roriri Software Solution Pvt. Ltd'
       };
 
-      console.log('Sending completion certificate with params:', {
-        ...emailParams,
-        attachment: '[PDF_DATA]' // Don't log the actual PDF data
+      console.log('Sending completion certificate email to:', intern.email);
+      console.log('Email parameters:', {
+        to_email: emailParams.to_email,
+        subject: emailParams.subject,
+        from_email: emailParams.from_email,
+        filename: emailParams.filename
       });
 
       const response = await emailjs.send(
@@ -228,10 +222,16 @@ Nallanathapuram, Kalakad`,
       // Provide more specific error messages
       let errorMessage = 'Failed to send email';
       
-      if (error.message.includes('not configured')) {
+      if (error.message && error.message.includes('not configured')) {
         errorMessage = error.message;
       } else if (error.text) {
         errorMessage = `EmailJS Error: ${error.text}`;
+      } else if (error.status === 400) {
+        errorMessage = 'Bad Request: Please check your EmailJS template configuration. Make sure all template variables match.';
+      } else if (error.status === 401) {
+        errorMessage = 'Unauthorized: Please check your EmailJS User ID and Service ID.';
+      } else if (error.status === 403) {
+        errorMessage = 'Forbidden: Please check your EmailJS configuration and permissions.';
       } else if (error.status) {
         errorMessage = `Email service error (${error.status}): Please check your EmailJS configuration`;
       } else {
@@ -252,41 +252,61 @@ Nallanathapuram, Kalakad`,
     try {
       emailjs.init(userId);
       console.log('EmailJS configured successfully');
+      console.log('Service ID:', serviceId);
+      console.log('Template ID:', templateId);
+      console.log('User ID:', userId);
     } catch (error) {
       console.error('Failed to initialize EmailJS:', error);
       throw new Error('Failed to configure EmailJS');
     }
   },
 
-  // Test configuration
-  testConfiguration: async () => {
+  // Test configuration with a simple test email
+  testConfiguration: async (testEmail = 'test@example.com') => {
     try {
       validateConfiguration();
       
       // Send a test email with minimal parameters
       const testParams = {
-        to_email: 'test@example.com',
+        to_email: testEmail,
         to_name: 'Test User',
+        from_email: 'sujinragul728@gmail.com',
         from_name: 'Roriri Software Solution Pvt. Ltd',
         subject: 'EmailJS Configuration Test',
-        message: 'This is a test email to verify EmailJS configuration.',
+        message: 'This is a test email to verify EmailJS configuration. If you receive this, your setup is working correctly!',
+        intern_name: 'Test User',
+        intern_position: 'Test Position',
         company_name: 'Roriri Software Solution Pvt. Ltd'
       };
 
-      // This will fail but help us understand what parameters are expected
-      await emailjs.send(
+      console.log('Testing configuration with params:', testParams);
+
+      const response = await emailjs.send(
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
         testParams,
         EMAILJS_USER_ID
       );
 
-      return { success: true };
+      console.log('Test email sent successfully:', response);
+      return { success: true, message: 'Test email sent successfully!' };
     } catch (error) {
       console.error('Configuration test failed:', error);
+      
+      let errorMessage = 'Configuration test failed';
+      if (error.status === 400) {
+        errorMessage = 'Template configuration error. Please check your EmailJS template variables.';
+      } else if (error.status === 401) {
+        errorMessage = 'Authentication failed. Please check your User ID and Service ID.';
+      } else if (error.text) {
+        errorMessage = `EmailJS Error: ${error.text}`;
+      } else {
+        errorMessage = error.message || 'Unknown error occurred';
+      }
+      
       return { 
         success: false, 
-        error: error.message || 'Configuration test failed' 
+        error: errorMessage 
       };
     }
   },
