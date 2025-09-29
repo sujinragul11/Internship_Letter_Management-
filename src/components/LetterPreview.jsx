@@ -37,28 +37,28 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       // Create PDF using jsPDF
       const doc = new jsPDF();
       
-      // Set font and styling
+      // Set smaller font and styling for single page
       doc.setFont('times', 'normal');
-      doc.setFontSize(12);
+      doc.setFontSize(9);
       
       // Add company header
-      doc.setFontSize(16);
+      doc.setFontSize(12);
       doc.setFont('times', 'bold');
       doc.text('Roriri Software Solution Pvt. Ltd', 20, 20);
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.text('Nallanathapuram, Kalakad', 20, 28);
       
       // Add a line separator
-      doc.line(20, 35, 190, 35);
+      doc.line(20, 32, 190, 32);
       
       // Process the letter content
       const lines = letterContent.split('\n');
-      let yPosition = 50;
+      let yPosition = 40;
       
       lines.forEach((line) => {
         if (line.trim() === '') {
-          yPosition += 5;
+          yPosition += 3;
           return;
         }
         
@@ -71,26 +71,27 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
             line.includes('TERMS AND CONDITIONS:') || line.includes('PERFORMANCE SUMMARY:') ||
             line.includes('PROJECTS AND CONTRIBUTIONS:')) {
           doc.setFont('times', 'bold');
-          doc.setFontSize(12);
+          doc.setFontSize(9);
         } else {
           doc.setFont('times', 'normal');
-          doc.setFontSize(11);
+          doc.setFontSize(8);
         }
         
         // Handle long lines by splitting them
-        const maxWidth = 170;
+        const maxWidth = 175;
         const splitText = doc.splitTextToSize(line, maxWidth);
         
         splitText.forEach((textLine) => {
-          if (yPosition > 270) { // Check if we need a new page
-            doc.addPage();
-            yPosition = 20;
+          // Ensure we don't exceed page boundaries - compress if needed
+          if (yPosition > 280) {
+            // Skip adding new page, just compress remaining content
+            return;
           }
           doc.text(textLine, 20, yPosition);
-          yPosition += 6;
+          yPosition += 4;
         });
         
-        yPosition += 2;
+        yPosition += 1;
       });
       
       // Generate filename
