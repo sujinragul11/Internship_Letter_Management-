@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Plus, Home } from 'lucide-react';
+import { FileText, Users, Plus, Home, Settings } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import InternForm from './components/InternForm';
 import LetterPreview from './components/LetterPreview';
 import InternsList from './components/InternsList';
+import EmailConfiguration from './components/EmailConfiguration';
 import { storageUtils } from './utils/storage';
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
     { id: 'dashboard', name: 'Dashboard', icon: Home },
     { id: 'new-intern', name: 'Add Intern', icon: Plus },
     { id: 'interns', name: 'Manage Interns', icon: Users },
+    { id: 'email-config', name: 'Email Setup', icon: Settings },
   ];
 
   return (
@@ -114,6 +116,10 @@ function App() {
               onRefresh={refreshData}
               onViewLetter={handleViewLetter}
             />
+          )}
+          
+          {currentView === 'email-config' && (
+            <EmailConfiguration />
           )}
           
           {currentView === 'preview' && selectedIntern && (

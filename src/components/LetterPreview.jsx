@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { ArrowLeft, Download, Mail, Send, FileText } from 'lucide-react';
 import { letterTemplates } from '../utils/letterTemplates';
 import { storageUtils } from '../utils/storage';
+import { emailService } from '../utils/emailService';
 import jsPDF from 'jspdf';
 
 function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
   const [emailSent, setEmailSent] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [emailStatus, setEmailStatus] = useState('');
 
   const generateLetterContent = () => {
     const template = letterTemplates[letterType];
@@ -124,44 +126,20 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
   const handleSendEmail = async () => {
     setIsGenerating(true);
+    setEmailStatus('Preparing email...');
     
     try {
       const letterContent = generateLetterContent();
       
-      // Create email content
-      const emailSubject = letterType === 'offer' 
-        ? `Internship Offer Letter - ${intern.position} Position`
-        : `Internship Completion Certificate - ${intern.name}`;
-        
-      const emailBody = letterType === 'offer'
-        ? `Dear ${intern.name},
-
-We are pleased to offer you an internship position as ${intern.position} at Roriri Software Solution Pvt. Ltd.
-
-Please find the detailed offer letter attached to this email.
-
-We look forward to having you join our team!
-
-Best regards,
-HR Team
-Roriri Software Solution Pvt. Ltd`
-        : `Dear ${intern.name},
-
-Congratulations on successfully completing your internship with us!
-
-Please find your internship completion certificate attached to this email.
-
-We wish you all the best in your future endeavors.
-
-Best regards,
-HR Team
-Roriri Software Solution Pvt. Ltd`;
-
-      // Create mailto link with the email content
-      const mailtoLink = `mailto:${intern.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+      setEmailStatus('Sending email...');
       
-      // Open default email client
-      window.open(mailtoLink);
+      // Send email using EmailJS
+      let emailResult;
+      if (letterType === 'offer') {
+        emailResult = await emailService.sendOfferLetter(intern, letterContent);
+      } else {
+        emailResult = await emailService.sendCompletionCertificate(intern, letterContent);
+      }
       
       // Save letter record with email sent flag
       const letterData = {
@@ -171,18 +149,22 @@ Roriri Software Solution Pvt. Ltd`;
         letterType,
         content: letterContent,
         generatedAt: new Date().toISOString(),
-        emailSent: true,
+        emailSent: emailResult.success,
+        emailSentAt: emailResult.sentAt,
+        emailMessageId: emailResult.messageId
       };
 
       storageUtils.saveLetter(letterData);
       onLetterGenerated();
       
-      setEmailSent(true);
+      if (emailResult.success) {
+        setEmailSent(true);
+        setEmailStatus('Email sent successfully!');
+      }
       
-      // Show success message
       setTimeout(() => {
-        alert('Email client opened! Please attach the PDF and send the email manually.');
         setEmailSent(false);
+        setEmailStatus('');
       }, 1000);
       
     } catch (error) {
@@ -190,6 +172,7 @@ Roriri Software Solution Pvt. Ltd`;
       alert('Error preparing email. Please try again.');
     }
     
+    setEmailStatus('');
     setIsGenerating(false);
   };
 
@@ -226,22 +209,43 @@ Roriri Software Solution Pvt. Ltd`;
           <button
             onClick={handleSendEmail}
             disabled={isGenerating || emailSent}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
+              emailSent 
+                ? 'bg-green-600 text-white' 
+                : isGenerating 
+                  ? 'bg-blue-400 text-white cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+            }`}
           >
             {emailSent ? (
               <>
                 <Send className="h-4 w-4" />
                 <span>Email Sent!</span>
               </>
+            ) : isGenerating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Sending...</span>
+              </>
             ) : (
               <>
                 <Mail className="h-4 w-4" />
-                <span>{isGenerating ? 'Sending...' : 'Send Email'}</span>
+                <span>Send Email</span>
               </>
             )}
           </button>
         </div>
       </div>
+
+      {/* Email Status */}
+      {emailStatus && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span className="text-blue-800 font-medium">{emailStatus}</span>
+          </div>
+        </div>
+      )}
 
       {/* Letter Preview */}
       <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
