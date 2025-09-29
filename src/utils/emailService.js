@@ -2,9 +2,9 @@ import emailjs from 'emailjs-com';
 import jsPDF from 'jspdf';
 
 // EmailJS configuration - You'll need to replace these with your actual EmailJS credentials
-const EMAILJS_SERVICE_ID = 'your_service_id'; // Replace with your EmailJS service ID
-const EMAILJS_TEMPLATE_ID = 'your_template_id'; // Replace with your EmailJS template ID
-const EMAILJS_USER_ID = 'your_user_id'; // Replace with your EmailJS user ID
+let EMAILJS_SERVICE_ID = 'your_service_id'; // Replace with your EmailJS service ID
+let EMAILJS_TEMPLATE_ID = 'your_template_id'; // Replace with your EmailJS template ID
+let EMAILJS_USER_ID = 'your_user_id'; // Replace with your EmailJS user ID
 
 // Initialize EmailJS
 emailjs.init(EMAILJS_USER_ID);
