@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, Mail, Key, CheckCircle } from 'lucide-react';
+import { Settings, Save, Mail, Key, CheckCircle, AlertTriangle, TestTube } from 'lucide-react';
 import { emailService } from '../utils/emailService';
 
 function EmailConfiguration() {
@@ -10,6 +10,8 @@ function EmailConfiguration() {
   });
   const [isConfigured, setIsConfigured] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     // Load saved configuration from localStorage
@@ -21,6 +23,37 @@ function EmailConfiguration() {
       emailService.configure(parsedConfig.serviceId, parsedConfig.templateId, parsedConfig.userId);
     }
   }, []);
+
+  const handleTest = async () => {
+    if (!config.serviceId || !config.templateId || !config.userId) {
+      alert('Please fill in all configuration fields before testing.');
+      return;
+    }
+
+    setIsTesting(true);
+    setTestResult(null);
+
+    try {
+      // Configure the service temporarily for testing
+      emailService.configure(config.serviceId, config.templateId, config.userId);
+      
+      // Test the configuration
+      const result = await emailService.testConfiguration();
+      setTestResult(result);
+      
+      if (result.success) {
+        alert('Configuration test successful! EmailJS is properly configured.');
+      } else {
+        alert(`Configuration test failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Test failed:', error);
+      setTestResult({ success: false, error: error.message });
+      alert(`Test failed: ${error.message}`);
+    }
+    
+    setIsTesting(false);
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -75,9 +108,31 @@ function EmailConfiguration() {
             <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
               <li>Create a free account at <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="underline">EmailJS.com</a></li>
               <li>Create an email service (Gmail, Outlook, etc.)</li>
-              <li>Create an email template with variables: to_email, to_name, from_name, subject, message, attachment, filename</li>
+              <li>Create an email template with these variables: <code className="bg-blue-100 px-1 rounded">to_email</code>, <code className="bg-blue-100 px-1 rounded">to_name</code>, <code className="bg-blue-100 px-1 rounded">from_name</code>, <code className="bg-blue-100 px-1 rounded">subject</code>, <code className="bg-blue-100 px-1 rounded">message</code></li>
               <li>Copy your Service ID, Template ID, and User ID below</li>
+              <li>Use the Test button to verify your configuration</li>
             </ol>
+          </div>
+
+          {/* Template Example */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="font-semibold text-yellow-900 mb-2 flex items-center">
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              EmailJS Template Example:
+            </h3>
+            <div className="text-sm text-yellow-800 space-y-2">
+              <p><strong>Subject:</strong> <code className="bg-yellow-100 px-1 rounded">{'{{subject}}'}</code></p>
+              <p><strong>Body:</strong></p>
+              <pre className="bg-yellow-100 p-2 rounded text-xs overflow-x-auto">
+{`To: {{to_name}} <{{to_email}}>
+From: {{from_name}}
+
+{{message}}
+
+Best regards,
+{{company_name}}`}
+              </pre>
+            </div>
           </div>
 
           {/* Configuration Form */}
@@ -123,7 +178,15 @@ function EmailConfiguration() {
           </div>
 
           {/* Save Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={handleTest}
+              disabled={isTesting || !config.serviceId || !config.templateId || !config.userId}
+              className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            >
+              <TestTube className="h-4 w-4" />
+              <span>{isTesting ? 'Testing...' : 'Test Configuration'}</span>
+            </button>
             <button
               onClick={handleSave}
               disabled={isSaving || !config.serviceId || !config.templateId || !config.userId}
@@ -133,6 +196,31 @@ function EmailConfiguration() {
               <span>{isSaving ? 'Saving...' : 'Save Configuration'}</span>
             </button>
           </div>
+
+          {/* Test Result */}
+          {testResult && (
+            <div className={`border rounded-lg p-4 ${
+              testResult.success 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-center space-x-2">
+                {testResult.success ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                )}
+                <span className={`font-medium ${
+                  testResult.success ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {testResult.success ? 'Configuration Test Passed!' : 'Configuration Test Failed'}
+                </span>
+              </div>
+              {!testResult.success && testResult.error && (
+                <p className="text-red-700 text-sm mt-2">{testResult.error}</p>
+              )}
+            </div>
+          )}
 
           {/* Status */}
           {isConfigured && (

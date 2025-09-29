@@ -129,6 +129,12 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
     setEmailStatus('Preparing email...');
     
     try {
+      // Check if EmailJS is configured
+      const configStatus = emailService.getConfigurationStatus();
+      if (!configStatus.isConfigured) {
+        throw new Error('EmailJS is not configured. Please configure EmailJS in the Email Setup section.');
+      }
+
       const letterContent = generateLetterContent();
       
       setEmailStatus('Sending email...');
@@ -165,11 +171,22 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       setTimeout(() => {
         setEmailSent(false);
         setEmailStatus('');
-      }, 1000);
+      }, 3000);
       
     } catch (error) {
       console.error('Error preparing email:', error);
-      alert('Error preparing email. Please try again.');
+      
+      // Show more specific error message
+      let errorMessage = 'Error sending email. Please try again.';
+      if (error.message.includes('not configured')) {
+        errorMessage = 'EmailJS is not configured. Please go to Email Setup to configure your email service.';
+      } else if (error.message.includes('EmailJS Error')) {
+        errorMessage = error.message + '\n\nPlease check your EmailJS template configuration.';
+      } else {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     }
     
     setEmailStatus('');
