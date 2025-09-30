@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Download, Mail, Send, FileText } from 'lucide-react';
 import { letterTemplates } from '../utils/letterTemplates';
 import { storageUtils } from '../utils/storage';
-import { emailService } from '../utils/emailService';
+import { backendEmailService } from '../utils/backendEmailService';
 import jsPDF from 'jspdf';
 
 function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
@@ -126,25 +126,23 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
   const handleSendEmail = async () => {
     setIsGenerating(true);
-    setEmailStatus('Preparing email...');
+    setEmailStatus('Connecting to email service...');
     
     try {
-      // Check if EmailJS is configured
-      const configStatus = emailService.getConfigurationStatus();
-      if (!configStatus.isConfigured) {
-        throw new Error('EmailJS is not configured. Please configure EmailJS in the Email Setup section.');
+      // Check if backend service is available
+      const healthCheck = await backendEmailService.checkHealth();
+      if (!healthCheck.success) {
+        throw new Error('Backend email service is not available. Please start the Node.js server.');
       }
 
-      const letterContent = generateLetterContent();
-      
       setEmailStatus('Sending email...');
       
-      // Send email using EmailJS
+      // Send email using backend service
       let emailResult;
       if (letterType === 'offer') {
-        emailResult = await emailService.sendOfferLetter(intern, letterContent);
+        emailResult = await backendEmailService.sendOfferLetter(intern);
       } else {
-        emailResult = await emailService.sendCompletionCertificate(intern, letterContent);
+        emailResult = await backendEmailService.sendCompletionCertificate(intern);
       }
       
       // Save letter record with email sent flag
@@ -153,7 +151,7 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
         internId: intern.id,
         internName: intern.name,
         letterType,
-        content: letterContent,
+        content: generateLetterContent(),
         generatedAt: new Date().toISOString(),
         emailSent: emailResult.success,
         emailSentAt: emailResult.sentAt,
@@ -165,7 +163,7 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       
       if (emailResult.success) {
         setEmailSent(true);
-        setEmailStatus('Email sent successfully!');
+        setEmailStatus(`Email sent successfully! ${emailResult.message || ''}`);
       }
       
       setTimeout(() => {
@@ -178,10 +176,10 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       
       // Show more specific error message
       let errorMessage = 'Error sending email. Please try again.';
-      if (error.message.includes('not configured')) {
-        errorMessage = 'EmailJS is not configured. Please go to Email Setup to configure your email service.';
-      } else if (error.message.includes('EmailJS Error')) {
-        errorMessage = error.message + '\n\nPlease check your EmailJS template configuration.';
+      if (error.message.includes('not available')) {
+        errorMessage = 'Backend email service is not available. Please start the Node.js server and try again.';
+      } else if (error.message.includes('Backend email service error')) {
+        errorMessage = error.message + '\n\nPlease check your email configuration in the backend service.';
       } else {
         errorMessage = error.message;
       }

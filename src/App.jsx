@@ -4,7 +4,7 @@ import Dashboard from './components/Dashboard';
 import InternForm from './components/InternForm';
 import LetterPreview from './components/LetterPreview';
 import InternsList from './components/InternsList';
-import EmailConfiguration from './components/EmailConfiguration';
+import BackendEmailConfiguration from './components/BackendEmailConfiguration';
 import { storageUtils } from './utils/storage';
 
 function App() {
@@ -43,7 +43,7 @@ function App() {
     { id: 'dashboard', name: 'Dashboard', icon: Home },
     { id: 'new-intern', name: 'Add Intern', icon: Plus },
     { id: 'interns', name: 'Manage Interns', icon: Users },
-    { id: 'email-config', name: 'Email Setup', icon: Settings },
+    { id: 'email-config', name: 'Email Service', icon: Settings },
   ];
 
   return (
@@ -119,7 +119,7 @@ function App() {
           )}
           
           {currentView === 'email-config' && (
-            <EmailConfiguration />
+            <BackendEmailConfiguration />
           )}
           
           {currentView === 'preview' && selectedIntern && (
