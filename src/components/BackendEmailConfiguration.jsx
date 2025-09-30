@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Server, CheckCircle, AlertTriangle, TestTube, Play, Stop } from 'lucide-react';
+import { Settings, Server, CheckCircle, AlertTriangle, TestTube, Play, Store as Stop } from 'lucide-react';
 import { backendEmailService } from '../utils/backendEmailService';
 
 function BackendEmailConfiguration() {
