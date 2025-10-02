@@ -1,9 +1,8 @@
-// Backend email service that communicates with Node.js server
 const API_BASE_URL = 'http://localhost:3001/api';
 
 export const backendEmailService = {
   // Send offer letter via backend
-  sendOfferLetter: async (internData) => {
+  sendOfferLetter: async (internData, htmlContent) => {
     try {
       console.log('Sending offer letter via backend for:', internData.name);
       
@@ -12,7 +11,10 @@ export const backendEmailService = {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ internData })
+        body: JSON.stringify({ 
+          internData,
+          htmlContent 
+        })
       });
 
       const result = await response.json();
@@ -37,7 +39,7 @@ export const backendEmailService = {
   },
 
   // Send completion certificate via backend
-  sendCompletionCertificate: async (internData) => {
+  sendCompletionCertificate: async (internData, htmlContent) => {
     try {
       console.log('Sending completion certificate via backend for:', internData.name);
       
@@ -46,7 +48,10 @@ export const backendEmailService = {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ internData })
+        body: JSON.stringify({ 
+          internData,
+          htmlContent 
+        })
       });
 
       const result = await response.json();
@@ -70,7 +75,7 @@ export const backendEmailService = {
     }
   },
 
-  // Test email configuration
+  // ... rest of the methods remain the same
   testConfiguration: async () => {
     try {
       console.log('Testing email configuration...');
@@ -104,7 +109,6 @@ export const backendEmailService = {
     }
   },
 
-  // Check backend health
   checkHealth: async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/health`);
@@ -125,10 +129,9 @@ export const backendEmailService = {
     }
   },
 
-  // Get configuration status
   getConfigurationStatus: () => {
     return {
-      isConfigured: true, // Backend handles configuration
+      isConfigured: true,
       serviceType: 'Node.js Backend Service',
       endpoint: API_BASE_URL
     };

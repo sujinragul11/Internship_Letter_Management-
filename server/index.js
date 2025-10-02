@@ -10,12 +10,12 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// Email transporter configuration
+// Email transporter configuration - FIXED: createTransport instead of createTransporter
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
@@ -846,30 +846,34 @@ const generateCompletionCertificateHTML = (internData) => {
 // API Routes
 app.post('/api/send-offer-letter', async (req, res) => {
   try {
-    const { internData } = req.body;
+    const { internData, htmlContent } = req.body;
     
     if (!internData) {
       return res.status(400).json({ error: 'Intern data is required' });
     }
 
     const transporter = createTransporter();
-    const htmlContent = generateOfferLetterHTML(internData);
+    
+    // Use frontend-provided HTML content if available, otherwise generate it on backend
+    const finalHtmlContent = htmlContent || generateOfferLetterHTML(internData);
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: internData.email,
       subject: `Internship Offer Letter - ${internData.position} Position at Roriri Software Solutions`,
-      html: htmlContent,
+      html: finalHtmlContent,
       attachments: [
         {
           filename: `offer-letter-${internData.name.replace(/\s+/g, '-').toLowerCase()}.html`,
-          content: htmlContent,
+          content: finalHtmlContent,
           contentType: 'text/html'
         }
       ]
     };
 
     const info = await transporter.sendMail(mailOptions);
+    
+    console.log(`Offer letter sent successfully to ${internData.email}`);
     
     res.json({
       success: true,
@@ -888,30 +892,34 @@ app.post('/api/send-offer-letter', async (req, res) => {
 
 app.post('/api/send-completion-certificate', async (req, res) => {
   try {
-    const { internData } = req.body;
+    const { internData, htmlContent } = req.body;
     
     if (!internData) {
       return res.status(400).json({ error: 'Intern data is required' });
     }
 
     const transporter = createTransporter();
-    const htmlContent = generateCompletionCertificateHTML(internData);
+    
+    // Use frontend-provided HTML content if available, otherwise generate it on backend
+    const finalHtmlContent = htmlContent || generateCompletionCertificateHTML(internData);
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: internData.email,
       subject: `Internship Completion Certificate - ${internData.name}`,
-      html: htmlContent,
+      html: finalHtmlContent,
       attachments: [
         {
           filename: `completion-certificate-${internData.name.replace(/\s+/g, '-').toLowerCase()}.html`,
-          content: htmlContent,
+          content: finalHtmlContent,
           contentType: 'text/html'
         }
       ]
     };
 
     const info = await transporter.sendMail(mailOptions);
+    
+    console.log(`Completion certificate sent successfully to ${internData.email}`);
     
     res.json({
       success: true,
@@ -975,11 +983,33 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     message: 'Email service is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    service: 'Roriri Internship Email Service',
+    version: '1.0.0'
+  });
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Unhandled error:', error);
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error'
+  });
+});
+
+// Fixed 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint not found',
+    path: req.path,
+    method: req.method
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`Email service running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🚀 Email service running on port ${PORT}`);
+  console.log(`📧 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔧 Service ready to handle email requests`);
 });
