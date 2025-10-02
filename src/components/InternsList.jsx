@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, Trash2, Edit, Mail, FileText } from 'lucide-react';
+import { Eye, Trash2, CreditCard as Edit, Mail, FileText } from 'lucide-react';
 import { supabaseStorage } from '../utils/supabaseStorage';
 
 function InternsList({ interns, onRefresh, onViewLetter }) {
