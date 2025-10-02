@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Save } from 'lucide-react';
-import { storageUtils } from '../utils/storage';
+import { supabaseStorage } from '../utils/supabaseStorage';
 
 function InternForm({ onSave, intern = null }) {
   const [formData, setFormData] = useState({
     name: intern?.name || '',
     email: intern?.email || '',
+    phone: intern?.phone || '',
     position: intern?.position || '',
-    startDate: intern?.startDate || '',
+    startDate: intern?.start_date || intern?.startDate || '',
     duration: intern?.duration || '',
     location:
       intern?.location ||
@@ -48,17 +49,19 @@ function InternForm({ onSave, intern = null }) {
 
     try {
       const internData = {
-        id: intern?.id || Date.now().toString(),
-        ...formData,
-        createdAt: intern?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        id: intern?.id,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || '',
+        position: formData.position,
+        start_date: formData.startDate,
+        duration: formData.duration,
+        location: formData.location,
+        stipend: formData.stipend,
+        status: intern?.status || 'pending',
       };
 
-      storageUtils.saveIntern(internData);
-
-      // Simulate async operation
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
+      await supabaseStorage.saveIntern(internData);
       onSave();
     } catch (error) {
       console.error('Error saving intern:', error);

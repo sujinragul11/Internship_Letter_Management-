@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { Eye, Trash2, Edit, Mail, FileText } from 'lucide-react';
-import { storageUtils } from '../utils/storage';
+import { supabaseStorage } from '../utils/supabaseStorage';
 
 function InternsList({ interns, onRefresh, onViewLetter }) {
   const [selectedIntern, setSelectedIntern] = useState(null);
 
-  const handleDelete = (internId) => {
+  const handleDelete = async (internId) => {
     if (window.confirm('Are you sure you want to delete this intern record?')) {
-      storageUtils.deleteIntern(internId);
-      onRefresh();
+      try {
+        await supabaseStorage.deleteIntern(internId);
+        onRefresh();
+      } catch (error) {
+        console.error('Error deleting intern:', error);
+        alert('Failed to delete intern');
+      }
     }
   };
 
@@ -67,7 +72,7 @@ function InternsList({ interns, onRefresh, onViewLetter }) {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(intern.startDate).toLocaleDateString()}
+                      {new Date(intern.start_date || intern.startDate).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">

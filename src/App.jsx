@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Plus, Home, Settings } from 'lucide-react';
+import { FileText, Users, Plus, Home, Settings, LogOut } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import InternForm from './components/InternForm';
 import LetterPreview from './components/LetterPreview';
 import InternsList from './components/InternsList';
 import BackendEmailConfiguration from './components/BackendEmailConfiguration';
-import { storageUtils } from './utils/storage';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import LoadingSpinner from './components/LoadingSpinner';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { supabaseStorage } from './utils/supabaseStorage';
 
-function App() {
+function AppContent() {
+  const { user, loading, signOut } = useAuth();
+  const [authView, setAuthView] = useState('login');
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedIntern, setSelectedIntern] = useState(null);
   const [selectedLetterType, setSelectedLetterType] = useState('offer');
@@ -15,13 +21,22 @@ function App() {
   const [letters, setLetters] = useState([]);
 
   useEffect(() => {
-    setInterns(storageUtils.getInterns());
-    setLetters(storageUtils.getLetters());
-  }, []);
+    if (user) {
+      refreshData();
+    }
+  }, [user]);
 
-  const refreshData = () => {
-    setInterns(storageUtils.getInterns());
-    setLetters(storageUtils.getLetters());
+  const refreshData = async () => {
+    try {
+      const [internsData, lettersData] = await Promise.all([
+        supabaseStorage.getInterns(),
+        supabaseStorage.getLetters()
+      ]);
+      setInterns(internsData);
+      setLetters(lettersData);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
   };
 
   const handleInternSaved = () => {
@@ -39,6 +54,29 @@ function App() {
     setCurrentView('preview');
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!user) {
+    if (authView === 'login') {
+      return <Login onSwitchToSignup={() => setAuthView('signup')} />;
+    }
+    return <Signup onSwitchToLogin={() => setAuthView('login')} />;
+  }
+
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: Home },
     { id: 'new-intern', name: 'Add Intern', icon: Plus },
@@ -48,7 +86,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -58,8 +95,17 @@ function App() {
                 Internship Letter Management
               </h1>
             </div>
-            <div className="text-sm text-gray-600">
-              HR Management System
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-600">
+                {user?.email}
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
             </div>
           </div>
         </div>
@@ -133,6 +179,14 @@ function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

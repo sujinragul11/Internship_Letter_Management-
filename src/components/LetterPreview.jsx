@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Download, Mail, Send, FileText } from 'lucide-react';
 import { letterTemplates } from '../utils/letterTemplates';
-import { storageUtils } from '../utils/storage';
+import { supabaseStorage } from '../utils/supabaseStorage';
 import { backendEmailService } from '../utils/backendEmailService';
 import jsPDF from 'jspdf';
 
@@ -10,24 +10,36 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
 
+  const internData = {
+    id: intern.id,
+    name: intern.name,
+    email: intern.email,
+    position: intern.position,
+    startDate: intern.start_date || intern.startDate,
+    duration: intern.duration,
+    location: intern.location,
+    stipend: intern.stipend,
+    date: intern.date || new Date().toISOString().split('T')[0],
+  };
+
   const generateLetterContent = () => {
     const template = letterTemplates[letterType];
     return template
-      .replace(/\{\{name\}\}/g, intern.name)
-      .replace(/\{\{date\}\}/g, new Date(intern.date).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      .replace(/\{\{name\}\}/g, internData.name)
+      .replace(/\{\{date\}\}/g, new Date(internData.date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       }))
-      .replace(/\{\{position\}\}/g, intern.position)
-      .replace(/\{\{start_date\}\}/g, new Date(intern.startDate).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      .replace(/\{\{position\}\}/g, internData.position)
+      .replace(/\{\{start_date\}\}/g, new Date(internData.startDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       }))
-      .replace(/\{\{duration\}\}/g, intern.duration)
-      .replace(/\{\{location\}\}/g, intern.location)
-      .replace(/\{\{stipend\}\}/g, intern.stipend);
+      .replace(/\{\{duration\}\}/g, internData.duration)
+      .replace(/\{\{location\}\}/g, internData.location)
+      .replace(/\{\{stipend\}\}/g, internData.stipend);
   };
 
   const handleDownload = async () => {
@@ -137,28 +149,21 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
       setEmailStatus('Sending email...');
       
-      // Send email using backend service
       let emailResult;
       if (letterType === 'offer') {
-        emailResult = await backendEmailService.sendOfferLetter(intern);
+        emailResult = await backendEmailService.sendOfferLetter(internData);
       } else {
-        emailResult = await backendEmailService.sendCompletionCertificate(intern);
+        emailResult = await backendEmailService.sendCompletionCertificate(internData);
       }
-      
-      // Save letter record with email sent flag
+
       const letterData = {
-        id: Date.now().toString(),
-        internId: intern.id,
-        internName: intern.name,
-        letterType,
-        content: generateLetterContent(),
-        generatedAt: new Date().toISOString(),
-        emailSent: emailResult.success,
-        emailSentAt: emailResult.sentAt,
-        emailMessageId: emailResult.messageId
+        internId: internData.id,
+        type: letterType,
+        recipientEmail: internData.email,
+        status: emailResult.success ? 'sent' : 'failed',
       };
 
-      storageUtils.saveLetter(letterData);
+      await supabaseStorage.saveLetter(letterData);
       onLetterGenerated();
       
       if (emailResult.success) {
