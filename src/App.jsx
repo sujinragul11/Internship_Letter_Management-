@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Plus, Home, Settings, LogOut } from 'lucide-react';
+import { FileText, Users, Plus, Home, Settings, LogOut, UserCircle } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import InternForm from './components/InternForm';
 import LetterPreview from './components/LetterPreview';
 import InternsList from './components/InternsList';
 import BackendEmailConfiguration from './components/BackendEmailConfiguration';
+import UserActivity from './components/UserActivity';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -81,6 +82,7 @@ function AppContent() {
     { id: 'dashboard', name: 'Dashboard', icon: Home },
     { id: 'new-intern', name: 'Add Intern', icon: Plus },
     { id: 'interns', name: 'Manage Interns', icon: Users },
+    { id: 'user-activity', name: 'User Activity', icon: UserCircle },
     { id: 'email-config', name: 'Email Service', icon: Settings },
   ];
 
@@ -167,7 +169,11 @@ function AppContent() {
           {currentView === 'email-config' && (
             <BackendEmailConfiguration />
           )}
-          
+
+          {currentView === 'user-activity' && (
+            <UserActivity />
+          )}
+
           {currentView === 'preview' && selectedIntern && (
             <LetterPreview 
               intern={selectedIntern}

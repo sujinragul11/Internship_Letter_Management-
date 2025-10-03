@@ -7,6 +7,7 @@ function SearchAndFilter({ onSearch, onFilter, searchTerm, activeFilters }) {
 
   const positions = ['Digital Marketing', 'Software Development', 'Graphic Design', 'HR', 'Finance', 'Operations'];
   const durations = ['1 Week', '2 Weeks', '1 Month', '2 Months', '3 Months', '6 Months'];
+  const statuses = ['active', 'inactive', 'completed'];
 
   const handleFilterChange = (type, value) => {
     const newFilters = { ...localFilters };
@@ -67,7 +68,7 @@ function SearchAndFilter({ onSearch, onFilter, searchTerm, activeFilters }) {
       {/* Filter Panel */}
       {isFilterOpen && (
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <h4 className="font-medium text-gray-900 mb-3">Position</h4>
               <div className="space-y-2">
@@ -97,6 +98,23 @@ function SearchAndFilter({ onSearch, onFilter, searchTerm, activeFilters }) {
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="ml-2 text-sm text-gray-700">{duration}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3">Status</h4>
+              <div className="space-y-2">
+                {statuses.map(status => (
+                  <label key={status} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={localFilters.statuses?.includes(status) || false}
+                      onChange={() => handleFilterChange('statuses', status)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
                   </label>
                 ))}
               </div>
