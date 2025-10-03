@@ -1,16 +1,14 @@
-import { InternDetails, GeneratedLetter } from '../types';
-
 const INTERNS_KEY = 'internship_interns';
 const LETTERS_KEY = 'internship_letters';
 
 export const storageUtils = {
   // Intern management
-  getInterns: (): InternDetails[] => {
+  getInterns: () => {
     const stored = localStorage.getItem(INTERNS_KEY);
     return stored ? JSON.parse(stored) : [];
   },
 
-  saveIntern: (intern: InternDetails): void => {
+  saveIntern: (intern) => {
     const interns = storageUtils.getInterns();
     const existingIndex = interns.findIndex(i => i.id === intern.id);
     
@@ -23,18 +21,18 @@ export const storageUtils = {
     localStorage.setItem(INTERNS_KEY, JSON.stringify(interns));
   },
 
-  deleteIntern: (id: string): void => {
+  deleteIntern: (id) => {
     const interns = storageUtils.getInterns().filter(i => i.id !== id);
     localStorage.setItem(INTERNS_KEY, JSON.stringify(interns));
   },
 
   // Letter management
-  getLetters: (): GeneratedLetter[] => {
+  getLetters: () => {
     const stored = localStorage.getItem(LETTERS_KEY);
     return stored ? JSON.parse(stored) : [];
   },
 
-  saveLetter: (letter: GeneratedLetter): void => {
+  saveLetter: (letter) => {
     const letters = storageUtils.getLetters();
     const existingIndex = letters.findIndex(l => l.id === letter.id);
     
@@ -47,7 +45,7 @@ export const storageUtils = {
     localStorage.setItem(LETTERS_KEY, JSON.stringify(letters));
   },
 
-  getLettersByIntern: (internId: string): GeneratedLetter[] => {
+  getLettersByIntern: (internId) => {
     return storageUtils.getLetters().filter(l => l.internId === internId);
   }
 };
