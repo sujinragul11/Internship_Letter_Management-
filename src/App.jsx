@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Plus, Home, Settings, LogOut, UserCircle } from 'lucide-react';
+import { FileText, Users, Plus, Home, Settings, LogOut, CircleUser as UserCircle } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import InternForm from './components/InternForm';
 import LetterPreview from './components/LetterPreview';
