@@ -116,16 +116,13 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       
       // Save letter record
       const letterData = {
-        id: Date.now().toString(),
         internId: intern.id,
-        internName: intern.name,
-        letterType,
-        content: letterContent,
-        generatedAt: new Date().toISOString(),
-        emailSent: false,
+        type: letterType,
+        recipientEmail: intern.email,
+        status: 'downloaded',
       };
 
-      storageUtils.saveLetter(letterData);
+      await supabaseStorage.saveLetter(letterData);
       onLetterGenerated();
       
     } catch (error) {
