@@ -135,17 +135,11 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
   const handleSendEmail = async () => {
     setIsGenerating(true);
-    setEmailStatus('Connecting to email service...');
-    
-    try {
-      // Check if backend service is available
-      const healthCheck = await backendEmailService.checkHealth();
-      if (!healthCheck.success) {
-        throw new Error('Backend email service is not available. Please start the Node.js server.');
-      }
+    setEmailStatus('Preparing to send email...');
 
+    try {
       setEmailStatus('Sending email...');
-      
+
       let emailResult;
       if (letterType === 'offer') {
         emailResult = await backendEmailService.sendOfferLetter(internData);
@@ -162,33 +156,32 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
       await supabaseStorage.saveLetter(letterData);
       onLetterGenerated();
-      
+
       if (emailResult.success) {
         setEmailSent(true);
         setEmailStatus(`Email sent successfully! ${emailResult.message || ''}`);
       }
-      
+
       setTimeout(() => {
         setEmailSent(false);
         setEmailStatus('');
       }, 3000);
-      
+
     } catch (error) {
-      console.error('Error preparing email:', error);
-      
-      // Show more specific error message
+      console.error('Error sending email:', error);
+
       let errorMessage = 'Error sending email. Please try again.';
-      if (error.message.includes('not available')) {
-        errorMessage = 'Backend email service is not available. Please start the Node.js server and try again.';
-      } else if (error.message.includes('Backend email service error')) {
-        errorMessage = error.message + '\n\nPlease check your email configuration in the backend service.';
+      if (error.message.includes('not configured')) {
+        errorMessage = `Email service is not fully configured yet.\n\nTo enable email functionality:\n1. Deploy the Supabase Edge Function using: supabase functions deploy send-email\n2. Configure the RESEND_API_KEY secret in your Supabase project\n3. Get a free API key from resend.com\n\nFor now, you can download the letter as a PDF and send it manually.`;
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = `Email service is not available.\n\nThe Supabase Edge Function needs to be deployed.\n\nFor now, please use the "Download PDF" button to save the letter and send it manually.`;
       } else {
         errorMessage = error.message;
       }
-      
+
       alert(errorMessage);
     }
-    
+
     setEmailStatus('');
     setIsGenerating(false);
   };

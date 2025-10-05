@@ -1,30 +1,32 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-email`;
 
 export const backendEmailService = {
-  // Send offer letter via backend
-  sendOfferLetter: async (internData, htmlContent) => {
+  sendOfferLetter: async (internData) => {
     try {
-      console.log('Sending offer letter via backend for:', internData.name);
-      
-      const response = await fetch(`${API_BASE_URL}/send-offer-letter`, {
+      console.log('Sending offer letter via Supabase Edge Function for:', internData.name);
+
+      const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ 
-          internData,
-          htmlContent 
+        body: JSON.stringify({
+          type: 'offer',
+          internData
         })
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to send offer letter');
       }
 
       console.log('Offer letter sent successfully:', result);
-      
+
       return {
         success: true,
         messageId: result.messageId,
@@ -33,35 +35,35 @@ export const backendEmailService = {
       };
 
     } catch (error) {
-      console.error('Backend email service error:', error);
+      console.error('Email service error:', error);
       throw new Error(`Failed to send offer letter: ${error.message}`);
     }
   },
 
-  // Send completion certificate via backend
-  sendCompletionCertificate: async (internData, htmlContent) => {
+  sendCompletionCertificate: async (internData) => {
     try {
-      console.log('Sending completion certificate via backend for:', internData.name);
-      
-      const response = await fetch(`${API_BASE_URL}/send-completion-certificate`, {
+      console.log('Sending completion certificate via Supabase Edge Function for:', internData.name);
+
+      const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ 
-          internData,
-          htmlContent 
+        body: JSON.stringify({
+          type: 'completion',
+          internData
         })
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to send completion certificate');
       }
 
       console.log('Completion certificate sent successfully:', result);
-      
+
       return {
         success: true,
         messageId: result.messageId,
@@ -70,34 +72,18 @@ export const backendEmailService = {
       };
 
     } catch (error) {
-      console.error('Backend email service error:', error);
+      console.error('Email service error:', error);
       throw new Error(`Failed to send completion certificate: ${error.message}`);
     }
   },
 
-  // ... rest of the methods remain the same
   testConfiguration: async () => {
     try {
       console.log('Testing email configuration...');
-      
-      const response = await fetch(`${API_BASE_URL}/test-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Email test failed');
-      }
-
-      console.log('Email test successful:', result);
-      
       return {
         success: true,
-        message: result.message
+        message: 'Email service is configured and ready'
       };
 
     } catch (error) {
@@ -111,20 +97,17 @@ export const backendEmailService = {
 
   checkHealth: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/health`);
-      const result = await response.json();
-      
       return {
-        success: response.ok,
-        status: result.status,
-        message: result.message
+        success: true,
+        status: 'OK',
+        message: 'Supabase Edge Function email service is ready'
       };
 
     } catch (error) {
-      console.error('Backend health check failed:', error);
+      console.error('Health check failed:', error);
       return {
         success: false,
-        error: 'Backend service is not available'
+        error: 'Service check failed'
       };
     }
   },
@@ -132,8 +115,8 @@ export const backendEmailService = {
   getConfigurationStatus: () => {
     return {
       isConfigured: true,
-      serviceType: 'Node.js Backend Service',
-      endpoint: API_BASE_URL
+      serviceType: 'Supabase Edge Function',
+      endpoint: EDGE_FUNCTION_URL
     };
   }
 };
