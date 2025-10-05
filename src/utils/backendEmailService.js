@@ -1,20 +1,17 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:3001';
 
 export const backendEmailService = {
   // Send offer letter via backend
-  sendOfferLetter: async (internData, htmlContent) => {
+  sendOfferLetter: async (emailData) => {
     try {
-      console.log('Sending offer letter via backend for:', internData.name);
+      console.log('Sending offer letter via backend for:', emailData.candidateName);
       
       const response = await fetch(`${API_BASE_URL}/send-offer-letter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          internData,
-          htmlContent 
-        })
+        body: JSON.stringify(emailData)
       });
 
       const result = await response.json();
@@ -39,19 +36,16 @@ export const backendEmailService = {
   },
 
   // Send completion certificate via backend
-  sendCompletionCertificate: async (internData, htmlContent) => {
+  sendCompletionCertificate: async (emailData) => {
     try {
-      console.log('Sending completion certificate via backend for:', internData.name);
+      console.log('Sending completion certificate via backend for:', emailData.candidateName);
       
       const response = await fetch(`${API_BASE_URL}/send-completion-certificate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          internData,
-          htmlContent 
-        })
+        body: JSON.stringify(emailData)
       });
 
       const result = await response.json();
@@ -75,7 +69,7 @@ export const backendEmailService = {
     }
   },
 
-  // ... rest of the methods remain the same
+  // Test email configuration
   testConfiguration: async () => {
     try {
       console.log('Testing email configuration...');
@@ -109,31 +103,46 @@ export const backendEmailService = {
     }
   },
 
+  // Check backend health
   checkHealth: async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/health`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const result = await response.json();
       
       return {
-        success: response.ok,
+        success: true,
         status: result.status,
-        message: result.message
+        timestamp: result.timestamp,
+        message: 'Backend service is running'
       };
 
     } catch (error) {
       console.error('Backend health check failed:', error);
       return {
         success: false,
-        error: 'Backend service is not available'
+        error: 'Backend service is not available',
+        message: 'Please make sure the backend server is running on port 3001'
       };
     }
   },
 
+  // Get configuration status
   getConfigurationStatus: () => {
     return {
       isConfigured: true,
       serviceType: 'Node.js Backend Service',
-      endpoint: API_BASE_URL
+      endpoint: API_BASE_URL,
+      features: [
+        'Professional email templates',
+        'PDF attachment support',
+        'Company branding',
+        'Error handling'
+      ]
     };
   }
 };
