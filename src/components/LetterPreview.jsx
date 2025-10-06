@@ -4,11 +4,30 @@ import { letterTemplates } from '../utils/letterTemplates';
 import { supabaseStorage } from '../utils/supabaseStorage';
 import { backendEmailService } from '../utils/backendEmailService';
 import jsPDF from 'jspdf';
+import NotificationToast from './NotificationToast'; // ADD THIS LINE
 
 function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
   const [emailSent, setEmailSent] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
+  const [notification, setNotification] = useState({ // ADD THIS STATE
+    show: false,
+    type: '',
+    message: ''
+  });
+
+  // ADD THIS FUNCTION
+  const showNotification = (type, message) => {
+    setNotification({
+      show: true,
+      type,
+      message
+    });
+    
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }));
+    }, 5000);
+  };
 
   const internData = {
     id: intern.id,
@@ -125,9 +144,12 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       await supabaseStorage.saveLetter(letterData);
       onLetterGenerated();
       
+      // ADD SUCCESS NOTIFICATION
+      showNotification('success', 'PDF downloaded successfully! 📄');
+      
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      showNotification('error', 'Error generating PDF. Please try again.');
     }
     
     setIsGenerating(false);
@@ -142,9 +164,9 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
       let emailResult;
       if (letterType === 'offer') {
-        emailResult = await backendEmailService.sendOfferLetter(internData);
+        emailResult = await backendEmailService.sendOfferLetter(internData); // REMOVE htmlContent
       } else {
-        emailResult = await backendEmailService.sendCompletionCertificate(internData);
+        emailResult = await backendEmailService.sendCompletionCertificate(internData); // REMOVE htmlContent
       }
 
       const letterData = {
@@ -160,6 +182,13 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       if (emailResult.success) {
         setEmailSent(true);
         setEmailStatus(`Email sent successfully! ${emailResult.message || ''}`);
+        
+        // ADD SUCCESS NOTIFICATION
+        showNotification('success', 
+          letterType === 'offer' 
+            ? 'Offer letter sent successfully! 📧' 
+            : 'Completion certificate sent successfully! 📜'
+        );
       }
 
       setTimeout(() => {
@@ -179,7 +208,8 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
         errorMessage = error.message;
       }
 
-      alert(errorMessage);
+      // CHANGE ALERT TO NOTIFICATION
+      showNotification('error', errorMessage);
     }
 
     setEmailStatus('');
@@ -306,6 +336,14 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
           </div>
         </div>
       </div>
+
+      {/* ADD NOTIFICATION TOAST COMPONENT */}
+      <NotificationToast
+        show={notification.show}
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

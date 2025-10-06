@@ -1,21 +1,19 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-email`;
+const API_BASE_URL = 'http://localhost:3001/api';
 
 export const backendEmailService = {
-  sendOfferLetter: async (internData) => {
+  // Send offer letter via backend
+  sendOfferLetter: async (internData) => { // htmlContent remove pannu
     try {
-      console.log('Sending offer letter via Supabase Edge Function for:', internData.name);
-
-      const response = await fetch(EDGE_FUNCTION_URL, {
+      console.log('Sending offer letter via backend for:', internData.name);
+      
+      const response = await fetch(`${API_BASE_URL}/send-offer-letter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          type: 'offer',
+        body: JSON.stringify({ 
           internData
+          // htmlContent remove pannu
         })
       });
 
@@ -40,19 +38,19 @@ export const backendEmailService = {
     }
   },
 
-  sendCompletionCertificate: async (internData) => {
+  // Send completion certificate via backend
+  sendCompletionCertificate: async (internData) => { // htmlContent remove pannu
     try {
-      console.log('Sending completion certificate via Supabase Edge Function for:', internData.name);
-
-      const response = await fetch(EDGE_FUNCTION_URL, {
+      console.log('Sending completion certificate via backend for:', internData.name);
+      
+      const response = await fetch(`${API_BASE_URL}/send-completion-certificate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          type: 'completion',
+        body: JSON.stringify({ 
           internData
+          // htmlContent remove pannu
         })
       });
 
@@ -77,6 +75,7 @@ export const backendEmailService = {
     }
   },
 
+  // Test email configuration
   testConfiguration: async () => {
     try {
       console.log('Testing email configuration...');
@@ -95,28 +94,35 @@ export const backendEmailService = {
     }
   },
 
+  // Check backend health
   checkHealth: async () => {
     try {
+      const response = await fetch(`${API_BASE_URL}/health`);
+      const result = await response.json();
+      
       return {
-        success: true,
-        status: 'OK',
-        message: 'Supabase Edge Function email service is ready'
+        success: response.ok,
+        status: result.status,
+        message: result.message
       };
 
     } catch (error) {
       console.error('Health check failed:', error);
       return {
         success: false,
-        error: 'Service check failed'
+        error: 'Backend service is not available'
       };
     }
   },
 
+  // Get configuration status
   getConfigurationStatus: () => {
     return {
       isConfigured: true,
-      serviceType: 'Supabase Edge Function',
-      endpoint: EDGE_FUNCTION_URL
+      serviceType: 'Node.js Backend Service',
+      endpoint: API_BASE_URL
     };
   }
 };
+
+export default backendEmailService;
