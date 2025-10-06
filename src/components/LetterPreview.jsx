@@ -4,11 +4,30 @@ import { letterTemplates } from '../utils/letterTemplates';
 import { supabaseStorage } from '../utils/supabaseStorage';
 import { backendEmailService } from '../utils/backendEmailService';
 import jsPDF from 'jspdf';
+import NotificationToast from './NotificationToast'; // ADD THIS LINE
 
 function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
   const [emailSent, setEmailSent] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
+  const [notification, setNotification] = useState({ // ADD THIS STATE
+    show: false,
+    type: '',
+    message: ''
+  });
+
+  // ADD THIS FUNCTION
+  const showNotification = (type, message) => {
+    setNotification({
+      show: true,
+      type,
+      message
+    });
+    
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }));
+    }, 5000);
+  };
 
   const internData = {
     id: intern.id,
@@ -125,9 +144,12 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
       await supabaseStorage.saveLetter(letterData);
       onLetterGenerated();
       
+      // ADD SUCCESS NOTIFICATION
+      showNotification('success', 'PDF downloaded successfully! 📄');
+      
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      showNotification('error', 'Error generating PDF. Please try again.');
     }
     
     setIsGenerating(false);
@@ -135,22 +157,16 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
   const handleSendEmail = async () => {
     setIsGenerating(true);
-    setEmailStatus('Connecting to email service...');
-    
-    try {
-      // Check if backend service is available
-      const healthCheck = await backendEmailService.checkHealth();
-      if (!healthCheck.success) {
-        throw new Error('Backend email service is not available. Please start the Node.js server.');
-      }
+    setEmailStatus('Preparing to send email...');
 
+    try {
       setEmailStatus('Sending email...');
-      
+
       let emailResult;
       if (letterType === 'offer') {
-        emailResult = await backendEmailService.sendOfferLetter(internData);
+        emailResult = await backendEmailService.sendOfferLetter(internData); // REMOVE htmlContent
       } else {
-        emailResult = await backendEmailService.sendCompletionCertificate(internData);
+        emailResult = await backendEmailService.sendCompletionCertificate(internData); // REMOVE htmlContent
       }
 
       const letterData = {
@@ -162,33 +178,40 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
 
       await supabaseStorage.saveLetter(letterData);
       onLetterGenerated();
-      
+
       if (emailResult.success) {
         setEmailSent(true);
         setEmailStatus(`Email sent successfully! ${emailResult.message || ''}`);
+        
+        // ADD SUCCESS NOTIFICATION
+        showNotification('success', 
+          letterType === 'offer' 
+            ? 'Offer letter sent successfully! 📧' 
+            : 'Completion certificate sent successfully! 📜'
+        );
       }
-      
+
       setTimeout(() => {
         setEmailSent(false);
         setEmailStatus('');
       }, 3000);
-      
+
     } catch (error) {
-      console.error('Error preparing email:', error);
-      
-      // Show more specific error message
+      console.error('Error sending email:', error);
+
       let errorMessage = 'Error sending email. Please try again.';
-      if (error.message.includes('not available')) {
-        errorMessage = 'Backend email service is not available. Please start the Node.js server and try again.';
-      } else if (error.message.includes('Backend email service error')) {
-        errorMessage = error.message + '\n\nPlease check your email configuration in the backend service.';
+      if (error.message.includes('not configured')) {
+        errorMessage = `Email service is not fully configured yet.\n\nTo enable email functionality:\n1. Deploy the Supabase Edge Function using: supabase functions deploy send-email\n2. Configure the RESEND_API_KEY secret in your Supabase project\n3. Get a free API key from resend.com\n\nFor now, you can download the letter as a PDF and send it manually.`;
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = `Email service is not available.\n\nThe Supabase Edge Function needs to be deployed.\n\nFor now, please use the "Download PDF" button to save the letter and send it manually.`;
       } else {
         errorMessage = error.message;
       }
-      
-      alert(errorMessage);
+
+      // CHANGE ALERT TO NOTIFICATION
+      showNotification('error', errorMessage);
     }
-    
+
     setEmailStatus('');
     setIsGenerating(false);
   };
@@ -313,6 +336,14 @@ function LetterPreview({ intern, letterType, onBack, onLetterGenerated }) {
           </div>
         </div>
       </div>
+
+      {/* ADD NOTIFICATION TOAST COMPONENT */}
+      <NotificationToast
+        show={notification.show}
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

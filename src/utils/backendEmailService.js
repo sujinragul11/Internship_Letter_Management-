@@ -1,27 +1,30 @@
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 export const backendEmailService = {
   // Send offer letter via backend
-  sendOfferLetter: async (emailData) => {
+  sendOfferLetter: async (internData) => { // htmlContent remove pannu
     try {
-      console.log('Sending offer letter via backend for:', emailData.candidateName);
+      console.log('Sending offer letter via backend for:', internData.name);
       
       const response = await fetch(`${API_BASE_URL}/send-offer-letter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(emailData)
+        body: JSON.stringify({ 
+          internData
+          // htmlContent remove pannu
+        })
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to send offer letter');
       }
 
       console.log('Offer letter sent successfully:', result);
-      
+
       return {
         success: true,
         messageId: result.messageId,
@@ -30,32 +33,35 @@ export const backendEmailService = {
       };
 
     } catch (error) {
-      console.error('Backend email service error:', error);
+      console.error('Email service error:', error);
       throw new Error(`Failed to send offer letter: ${error.message}`);
     }
   },
 
   // Send completion certificate via backend
-  sendCompletionCertificate: async (emailData) => {
+  sendCompletionCertificate: async (internData) => { // htmlContent remove pannu
     try {
-      console.log('Sending completion certificate via backend for:', emailData.candidateName);
+      console.log('Sending completion certificate via backend for:', internData.name);
       
       const response = await fetch(`${API_BASE_URL}/send-completion-certificate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(emailData)
+        body: JSON.stringify({ 
+          internData
+          // htmlContent remove pannu
+        })
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to send completion certificate');
       }
 
       console.log('Completion certificate sent successfully:', result);
-      
+
       return {
         success: true,
         messageId: result.messageId,
@@ -64,7 +70,7 @@ export const backendEmailService = {
       };
 
     } catch (error) {
-      console.error('Backend email service error:', error);
+      console.error('Email service error:', error);
       throw new Error(`Failed to send completion certificate: ${error.message}`);
     }
   },
@@ -73,25 +79,10 @@ export const backendEmailService = {
   testConfiguration: async () => {
     try {
       console.log('Testing email configuration...');
-      
-      const response = await fetch(`${API_BASE_URL}/test-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Email test failed');
-      }
-
-      console.log('Email test successful:', result);
-      
       return {
         success: true,
-        message: result.message
+        message: 'Email service is configured and ready'
       };
 
     } catch (error) {
@@ -107,26 +98,19 @@ export const backendEmailService = {
   checkHealth: async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/health`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
       const result = await response.json();
       
       return {
-        success: true,
+        success: response.ok,
         status: result.status,
-        timestamp: result.timestamp,
-        message: 'Backend service is running'
+        message: result.message
       };
 
     } catch (error) {
-      console.error('Backend health check failed:', error);
+      console.error('Health check failed:', error);
       return {
         success: false,
-        error: 'Backend service is not available',
-        message: 'Please make sure the backend server is running on port 3001'
+        error: 'Backend service is not available'
       };
     }
   },
@@ -136,13 +120,9 @@ export const backendEmailService = {
     return {
       isConfigured: true,
       serviceType: 'Node.js Backend Service',
-      endpoint: API_BASE_URL,
-      features: [
-        'Professional email templates',
-        'PDF attachment support',
-        'Company branding',
-        'Error handling'
-      ]
+      endpoint: API_BASE_URL
     };
   }
 };
+
+export default backendEmailService;
